@@ -1,16 +1,18 @@
 import pandas as pd
 from google.cloud import bigquery
 
-file_path = "Lt09.csv"
+file_path = "str09.csv"
 df = pd.read_csv(file_path, encoding='utf-8')
+
 
 key_path = "./itwill-final-gcp-key.json"
 client = bigquery.Client.from_service_account_json(key_path)
 print(f"연결된 프로젝트 ID: {client.project}")
 
+
 project_id = f"{client.project}"
 dataset_id = f"itwill_final_data"
-table_id = "Lt09_20260207_data"
+table_id = "str09_raw_data"
 
 dataset = bigquery.Dataset(f"{project_id}.{dataset_id}")
 
