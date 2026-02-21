@@ -1,0 +1,28 @@
+# Data & Database
+pandas
+numpy
+google-cloud-bigquery
+db-dtypes
+pyarrow
+openpyxl
+
+# Visualization
+matplotlib
+seaborn
+
+# Machine Learning
+scikit-learn
+xgboost
+shap
+
+# Statistics
+statsmodels
+scipy
+pingouin
+
+# AutoML (optional - 1.파이캐럿 실패.ipynb에서 사용)
+pycaret
+
+# Jupyter
+ipython
+jupyter
