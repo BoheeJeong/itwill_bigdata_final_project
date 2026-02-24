@@ -357,13 +357,24 @@ def my_shap_analysis(
                 if name == "model":
                     continue
                 x_df = step.transform(x_df)
+        if hasattr(x_df, "columns"):
+            columns = x_df.columns.tolist()
+            indexs = x_df.index.tolist()
+        else:
+            x_df = np.asarray(x_df)
+            columns = [f"f{i}" for i in range(x_df.shape[1])]
+            indexs = list(range(x_df.shape[0]))
+            x_df = DataFrame(x_df, columns=columns, index=indexs)
         masker = shap.maskers.Independent(x_df)
         explainer = shap.LinearExplainer(estimator, masker=masker)
     else:
         explainer = shap.TreeExplainer(estimator)
 
     shap_values = explainer.shap_values(x_df)
-
+    if isinstance(shap_values, list):
+        shap_values = shap_values[1] if len(shap_values) > 1 else shap_values[0]
+    if shap_values.shape[1] != len(columns):
+        columns = x_df.columns.tolist()
     shap_df = DataFrame(
         shap_values,
         columns=columns,
@@ -416,7 +427,7 @@ def my_shap_analysis(
         plt.show()
         plt.close()
 
-    return summary_df, shap_values
+    return summary_df, shap_values, x_df
 
 
 def hs_shap_dependence_analysis(
