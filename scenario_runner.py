@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer
 from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn.experimental import enable_iterative_imputer  # noqa: F401
 from sklearn.impute import IterativeImputer
@@ -133,6 +133,13 @@ class MedianImputerWithMissingIndicator(BaseEstimator, TransformerMixin):
         return np.hstack([scaled, missing])
 
 
+def _to_dense_float64(X):
+    """ColumnTransformer 출력을 dense float64로 변환 (CatBoost 등 호환용)."""
+    if hasattr(X, "toarray"):
+        X = X.toarray()
+    return np.ascontiguousarray(np.asarray(X, dtype=np.float64))
+
+
 def build_numeric_pipe(scenario: str) -> Pipeline:
     """
     시나리오별 연속형 전처리 파이프라인 생성.
@@ -217,7 +224,11 @@ def run_model(
             ),
             (
                 "onehot",
-                OneHotEncoder(drop="first", handle_unknown="ignore"),
+                OneHotEncoder(
+                    drop="first",
+                    handle_unknown="ignore",
+                    sparse_output=False,
+                ),
             ),
         ]
     )
@@ -228,12 +239,15 @@ def run_model(
         [
             ("num", numeric_pipe, num_cols),
             ("cat", categorical_pipe, cat_cols),
-        ]
+        ],
+        sparse_threshold=0.0,
     )
 
+    # CatBoost 등 일부 추정기는 dense float64 배열 필요; 전처리 출력을 명시적으로 변환
     pipe = Pipeline(
         [
             ("preprocess", preprocess),
+            ("to_dense", FunctionTransformer(_to_dense_float64, validate=False)),
             ("model", estimator),
         ]
     )
